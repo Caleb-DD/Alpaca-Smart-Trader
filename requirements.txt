@@ -1,3 +1,9 @@
 alpaca-trade-api
 transformers
 python-dotenv
+pandas
+pandas_ta
+scikit-learn
+torch
+ultralytics
+mplfinance
