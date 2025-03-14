@@ -80,3 +80,7 @@ The bot will continuously fetch news and chat data, analyze sentiment, and execu
 ## Disclaimer
 
 This trading bot is provided for educational purposes only. Trading involves risks, and you should not trade with money you cannot afford to lose. Use this bot at your own risk.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
