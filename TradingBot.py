@@ -3,8 +3,8 @@ import os
 from alpaca_trade_api import REST
 from transformers import pipeline
 import logging
-import argparse
 from importlib import import_module
+import json
 
 # === Configuration ===
 
@@ -18,12 +18,28 @@ except Exception as e:
     logging.error(f"Failed to initialize sentiment pipeline: {e}")
     exit(1)
 
+# === Helper Functions ===
+
+def load_preset(preset_name):
+    """Loads a preset from a JSON file."""
+    try:
+        with open(f"presets/{preset_name}.json", "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        logging.error(f"Preset '{preset_name}' not found.")
+        return None
+
+def save_preset(preset_name, params):
+    """Saves parameters as a preset in a JSON file."""
+    os.makedirs("presets", exist_ok=True)
+    with open(f"presets/{preset_name}.json", "w") as f:
+        json.dump(params, f, indent=4)
+
 # === Main Bot Loop ===
 
 def run_bot(api_key, secret_key, base_url, symbol, dollar_amount, check_interval, strategy, **strategy_kwargs):
     try:
         api = REST(api_key, secret_key, base_url=base_url)
-        # Import the selected strategy module
         try:
             strategy_module = import_module(f"strategies.{strategy}")
         except ImportError:
@@ -31,39 +47,85 @@ def run_bot(api_key, secret_key, base_url, symbol, dollar_amount, check_interval
             return
 
         while True:
-            # Execute the trading logic from the strategy module
+            # Debugging: Print dollar_amount
+            print(f"Debugging: dollar_amount in run_bot: {dollar_amount}")
+
             try:
                 strategy_module.trade_logic(symbol, dollar_amount, api, **strategy_kwargs)
             except Exception as e:
                 logging.error(f"Error executing strategy '{strategy}': {e}")
-
             time.sleep(int(check_interval))
     except Exception as e:
         logging.error(f"Bot execution error: {e}")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Trading Bot")
-    parser.add_argument("--api_key", required=True, help="Alpaca API key")
-    parser.add_argument("--secret_key", required=True, help="Alpaca secret key")
-    parser.add_argument("--base_url", default="https://paper-api.alpaca.markets", help="Alpaca base URL")
-    parser.add_argument("--symbol", default="AAPL", help="Stock symbol")
-    parser.add_argument("--dollar_amount", type=float, default=100.0, help="Dollar amount to trade")
-    parser.add_argument("--check_interval", type=int, default=300, help="Check interval in seconds")
-    parser.add_argument("--strategy", default="sentiment", help="Trading strategy (sentiment, moving_average, etc.)")
+    use_preset = input("Use preset? (yes/no): ").lower() == "yes"
 
-    # Strategy-specific arguments (you can add more as needed)
-    if parser.parse_known_args()[0].strategy == "moving_average":
-        parser.add_argument("--short_window", type=int, default=20, help="Short window for moving average")
-        parser.add_argument("--long_window", type=int, default=50, help="Long window for moving average")
-        parser.add_argument("--timeframe", default="1Day", help="Timeframe of the data to use. (1Min, 5Min, 15Min, 1Day etc.)")
+    try:
+        if use_preset:
+            try:
+                presets = [f.split(".json")[0] for f in os.listdir("presets") if f.endswith(".json")]
+                print("Available presets:", presets)
+                preset_name = input("Enter preset name: ")
+                params = load_preset(preset_name)
+                if params:
+                    api_key = params["api_key"]
+                    secret_key = params["secret_key"]
+                    base_url = params.get("base_url", "https://paper-api.alpaca.markets")
+                    symbol = params["symbol"]
+                    dollar_amount = params["dollar_amount"]
+                    check_interval = params["check_interval"]
+                    strategy = params["strategy"]
+                    strategy_kwargs = params.get("strategy_kwargs", {})
+                else:
+                    exit()
+            except FileNotFoundError:
+                print("No presets folder found, running manual input")
+                use_preset = False
+        if not use_preset:
+            api_key = input("Enter Alpaca API Key: ")
+            secret_key = input("Enter Alpaca Secret Key: ")
+            base_url = input("Enter Alpaca Base URL (default: https://paper-api.alpaca.markets): ") or "https://paper-api.alpaca.markets"
+            symbol = input("Enter Stock Symbol (default: AAPL): ") or "AAPL"
+            while True:
+                try:
+                    dollar_amount = float(input("Enter Dollar Amount to Trade: "))
+                    if dollar_amount > 0:
+                        break
+                    else:
+                        print("Dollar amount must be greater than 0.")
+                except ValueError:
+                    print("Invalid input. Please enter a number.")
 
-    args = parser.parse_args()
+            check_interval = int(input("Enter Check Interval (seconds, default: 10): ") or 10)
+            strategy = input("Enter Trading Strategy (sentiment, moving_average): ") or "sentiment"
 
-    # Pass strategy-specific arguments as keyword arguments
-    strategy_kwargs = {}
-    if args.strategy == "moving_average":
-        strategy_kwargs["short_window"] = args.short_window
-        strategy_kwargs["long_window"] = args.long_window
-        strategy_kwargs["timeframe"] = args.timeframe
+            strategy_kwargs = {}
+            if strategy == "moving_average":
+                strategy_kwargs["short_window"] = int(input("Enter Short Window for Moving Average: "))
+                strategy_kwargs["long_window"] = int(input("Enter Long Window for Moving Average: "))
+                strategy_kwargs["timeframe"] = input("Enter Timeframe (1Min, 5Min, 1Day, etc.): ")
 
-    run_bot(args.api_key, args.secret_key, args.base_url, args.symbol, args.dollar_amount, args.check_interval, args.strategy, **strategy_kwargs)
+            save_option = input("Save as preset? (yes/no): ").lower() == "yes"
+            if save_option:
+                preset_name = input("Enter preset name: ")
+                # Ensure dollar_amount is converted to float before saving
+                params = {
+                    "api_key": api_key,
+                    "secret_key": secret_key,
+                    "base_url": base_url,
+                    "symbol": symbol,
+                    "dollar_amount": float(dollar_amount),
+                    "check_interval": check_interval,
+                    "strategy": strategy,
+                    "strategy_kwargs": strategy_kwargs,
+                }
+                save_preset(preset_name, params)
+
+        # Debugging: Print dollar_amount
+        print(f"Debugging: dollar_amount before run_bot: {dollar_amount}")
+
+        run_bot(api_key, secret_key, base_url, symbol, dollar_amount, check_interval, strategy, **strategy_kwargs)
+    except Exception as e:
+        print(f"An error occurred during input: {e}")
+        
