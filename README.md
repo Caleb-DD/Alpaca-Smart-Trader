@@ -1,6 +1,6 @@
-# Sentiment and Technical Indicator Trading Bot
+# Alpaca Smart Trader
 
-This project implements a trading bot that uses sentiment analysis and technical indicators to make trading decisions. It fetches news and chat data (for sentiment) and historical price data to execute trades based on different strategies.
+This project implements an automated trading bot that uses various strategies to make trading decisions. It integrates with the Alpaca trading API to execute trades based on user-defined configurations, which can be saved and loaded as presets.
 
 ## Features
 
@@ -9,10 +9,12 @@ This project implements a trading bot that uses sentiment analysis and technical
     * Moving average crossover strategy
     * Bollinger Bands strategy
     * RSI (Relative Strength Index) strategy
+    * Option to make your own strategy
 * **Alpaca API Integration:** Connects to the Alpaca trading API to execute trades.
-* **Command-Line Interface:** Uses command-line arguments for flexible configuration.
+* **Interactive Command-Line Interface:** Uses prompts to gather user inputs for flexible configuration.
 * **Preset Management:** Save and load trading configurations as presets.
 * **Logging:** Implements logging for better monitoring and debugging.
+* **Input Validation:** Ensures that the users inputs are valid.
 
 ## Prerequisites
 
@@ -29,7 +31,7 @@ Before running the bot, ensure you have the following:
 
     ```bash
     git clone <repository_url>
-    cd sentiment-trading-bot
+    cd alpaca-trading-bot
     ```
 
 2.  **Create a virtual environment (recommended):**
@@ -60,72 +62,39 @@ Before running the bot, ensure you have the following:
 
 5.  **Run the bot:**
 
-    * See the "Usage" section below for command-line options.
+    ```bash
+    python TradingBot.py
+    ```
 
 ## Usage
 
-The bot is configured and run using command-line arguments.
+The bot uses an interactive command-line interface. When you run `TradingBot.py`, it will prompt you for the necessary parameters.
 
-###   General Arguments:
+###   Input Parameters:
 
-* `--api_key`:   Alpaca API key (required)
-* `--secret_key`: Alpaca secret key (required)
-* `--base_url`: Alpaca base URL (default: `https://paper-api.alpaca.markets`)
-* `--symbol`:    Stock symbol (default: `AAPL`)
-* `--dollar_amount`: Dollar amount to trade (default: `100.0`)
-* `--check_interval`: Check interval in seconds (default: `300`)
-* `--strategy`:  Trading strategy (default: `sentiment`)
+* **Alpaca API Key:** Your Alpaca API key.
+* **Alpaca Secret Key:** Your Alpaca secret key.
+* **Alpaca Base URL:** Alpaca base URL (default: `https://paper-api.alpaca.markets`).
+* **Stock Symbol:** Stock symbol (default: `AAPL`).
+* **Dollar Amount to Trade:** Dollar amount to trade.
+* **Check Interval:** Check interval in seconds (default: `10`).
+* **Trading Strategy:** Trading strategy (`sentiment`, `moving_average`, `bollinger_bands`, `rsi`).
 
-###   Strategy-Specific Arguments:
-
-####   Sentiment Strategy:
-
-* No additional arguments.
-
-####   Moving Average Strategy:
-
-* `--short_window`: Short window for moving average (required)
-* `--long_window`: Long window for moving average (required)
-* `--timeframe`: Timeframe of the data to use (required) (e.g., `1Min`, `5Min`, `1Day`)
-
-####   Bollinger Bands Strategy:
-
-* `--window`: Window for Bollinger Bands (default: 20)
-* `--num_std`: Number of standard deviations (default: 2)
-* `--timeframe`: Timeframe of the data to use (default: `1Day`) (e.g., `1Min`, `5Min`, `1Day`)
-
-####   RSI Strategy:
-
-* `--window`: Window for RSI calculation (default: 14)
-* `--overbought`: Overbought threshold (default: 70)
-* `--oversold`: Oversold threshold (default: 30)
-* `--timeframe`: Timeframe of the data to use (default: `1Day`) (e.g., `1Min`, `5Min`, `1Day`)
-
-###   Examples:
-
-* **Sentiment Strategy:**
-
-    ```bash
-    python TradingBot.py --api_key YOUR_API_KEY --secret_key YOUR_SECRET_KEY --symbol AAPL --dollar_amount 100 --check_interval 10 --strategy sentiment
-    ```
+###   Strategy-Specific Inputs:
 
 * **Moving Average Strategy:**
-
-    ```bash
-    python TradingBot.py --api_key YOUR_API_KEY --secret_key YOUR_SECRET_KEY --symbol AAPL --dollar_amount 100 --check_interval 10 --strategy moving_average --short_window 20 --long_window 50 --timeframe 1Day
-    ```
-
+    * Short window for moving average.
+    * Long window for moving average.
+    * Timeframe of the data to use (e.g., `1Min`, `5Min`, `1Day`).
 * **Bollinger Bands Strategy:**
-
-    ```bash
-    python TradingBot.py --api_key YOUR_API_KEY --secret_key YOUR_SECRET_KEY --symbol AAPL --dollar_amount 100 --check_interval 10 --strategy bollinger_bands --window 20 --num_std 2 --timeframe 1Day
-    ```
-
+    * Window for Bollinger Bands.
+    * Number of standard deviations.
+    * Timeframe of the data to use (e.g., `1Min`, `5Min`, `1Day`).
 * **RSI Strategy:**
-
-    ```bash
-    python TradingBot.py --api_key YOUR_API_KEY --secret_key YOUR_SECRET_KEY --symbol AAPL --dollar_amount 100 --check_interval 10 --strategy rsi --window 14 --overbought 70 --oversold 30 --timeframe 1Day
-    ```
+    * Window for RSI calculation.
+    * Overbought threshold.
+    * Oversold threshold.
+    * Timeframe of the data to use (e.g., `1Min`, `5Min`, `1Day`).
 
 ###   Preset Management
 
